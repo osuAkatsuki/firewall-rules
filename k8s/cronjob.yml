@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ip-autoblock-job-production
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: ip-autoblock-job-production
+            image: osuakatsuki/firewall:latest
+            imagePullPolicy: Always
+            command:
+              - python3 tools/ip_autoblock_job.py
+            env:
+              - name: KUBERNETES
+                value: 'true'
+              - name: PULL_SECRETS_FROM_VAULT
+                value: '1'
+              - name: VAULT_ADDR
+                valueFrom:
+                  secretKeyRef:
+                    name: vault
+                    key: address
+              - name: VAULT_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: vault
+                    key: token
+              - name: APP_ENV
+                value: production # TODO
+          restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: osuakatsuki-registry-secret
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
