@@ -1,9 +1,11 @@
+import logging
 import ipaddress
 import re
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 
+import logger
 import settings
 from adapters import cloudflare
 from adapters import datadog
@@ -35,7 +37,10 @@ def main() -> int:
         events_to="now",
         query="service:rev-proxy",
     )
-    print(f"Received {len(datadog_logs)} logs from Datadog")
+    logging.info(
+        f"Received {len(datadog_logs)} logs from Datadog",
+        extra={"log_count": len(datadog_logs)},
+    )
 
     malicious_requests_by_ip: defaultdict[str, list[NetworkRequest]] = defaultdict(list)
     for datadog_log in datadog_logs:
@@ -58,7 +63,11 @@ def main() -> int:
             malicious_requests_by_ip[log["network"]["client"]["ip"]].append(request)
         else:
             pass  # print("Normal request", log_attributes["http_url"])
-    print(f"Parsed {len(datadog_logs)} requests from logs")
+
+    logging.info(
+        f"Parsed {len(datadog_logs)} requests from logs",
+        extra={"request_count": len(datadog_logs)},
+    )
 
     # TODO: de-duplicate against existing block list
     malicious_ipv4_addresses: list[str] = [
@@ -71,8 +80,9 @@ def main() -> int:
         list_id=settings.CLOUDFLARE_DDOS_IPS_LIST_ID,
         items=malicious_ipv4_addresses,
     )
-    print(
-        f"Added {len(malicious_ipv4_addresses)} malicious IPs to Cloudflare block list"
+    logging.info(
+        f"Added {len(malicious_ipv4_addresses)} malicious IPs to Cloudflare block list",
+        extra={"ip_count": len(malicious_ipv4_addresses)},
     )
 
     # TODO: auto-report ips to abuseipdb
@@ -81,4 +91,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    logger.configure_logging()
     exit(main())
