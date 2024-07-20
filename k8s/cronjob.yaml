@@ -14,8 +14,12 @@ spec:
             image: osuakatsuki/firewall-rules:latest
             imagePullPolicy: Always
             command:
-              - python3 tools/ip_autoblock_job.py
+              - /scripts/bootstrap.sh
             env:
+              - name: APP_ENV
+                value: production
+              - name: APP_COMPONENT
+                value: ip-autoblock-job
               - name: KUBERNETES
                 value: 'true'
               - name: PULL_SECRETS_FROM_VAULT
