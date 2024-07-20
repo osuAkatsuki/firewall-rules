@@ -28,7 +28,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: osuAkatsuki/firewall
+          images: osuAkatsuki/firewall-rules
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -37,8 +37,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/firewall:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/firewall:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/firewall-rules:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/firewall-rules:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Get kubeconfig from github secrets

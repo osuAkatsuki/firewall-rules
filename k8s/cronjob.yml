@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: ip-autoblock-job-production
-            image: osuakatsuki/firewall:latest
+            image: osuakatsuki/firewall-rules:latest
             imagePullPolicy: Always
             command:
               - python3 tools/ip_autoblock_job.py

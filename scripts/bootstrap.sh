@@ -14,7 +14,7 @@ if [ -z "$APP_COMPONENT" ]; then
 fi
 
 if [[ $PULL_SECRETS_FROM_VAULT -eq 1 ]]; then
-  akatsuki vault get firewall $APP_ENV -o .env
+  akatsuki vault get firewall-rules $APP_ENV -o .env
   source .env
 fi
 
