@@ -8,6 +8,9 @@ http_client = httpx.Client(base_url=CLOUDFLARE_API_BASE_URL)
 
 
 def add_list_items(list_id: str, items: list[str]) -> None:
+    if not items:
+        return None
+
     response = http_client.post(
         f"/client/v4/accounts/{settings.CLOUDFLARE_ACCOUNT_ID}/rules/lists/{list_id}/items",
         headers={
