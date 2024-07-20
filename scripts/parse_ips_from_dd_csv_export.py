@@ -35,7 +35,7 @@ def is_ddos_request(log_attributes: dict[str, Any]) -> bool:
 
 
 @dataclass
-class DDOSRequest:
+class DDoSRequest:
     ip: str
     http_method: str
     http_host: str
@@ -48,7 +48,7 @@ class DDOSRequest:
 
 def main() -> int:
     failed_to_parse = 0
-    ddos_requests_by_ip: defaultdict[str, list[DDOSRequest]] = defaultdict(list)
+    ddos_requests_by_ip: defaultdict[str, list[DDoSRequest]] = defaultdict(list)
     with open(CSV_FILEPATH) as f:
         csv_reader = csv.DictReader(f)
         for line in csv_reader:
@@ -59,7 +59,7 @@ def main() -> int:
                 continue
 
             if is_ddos_request(log_attributes):
-                ddos_request = DDOSRequest(
+                ddos_request = DDoSRequest(
                     ip=log_attributes["ip"],
                     http_method=log_attributes["http_method"],
                     http_host=log_attributes["http_host"],
@@ -73,7 +73,7 @@ def main() -> int:
                 )
                 ddos_requests_by_ip[log_attributes["ip"]].append(ddos_request)
                 print(
-                    "DDOS request detected",
+                    "DDoS request detected",
                     "{timestamp} {ip} {http_method} {http_host} {http_url}".format(
                         **asdict(ddos_request)
                     ),
