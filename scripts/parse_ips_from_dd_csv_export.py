@@ -1,9 +1,12 @@
 import csv
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Any
 
 import re
 
-CSV_FILEPATH = ".data/extract-2024-07-20T03_46_25.084Z.csv"
+CSV_FILEPATH = ".data/extract-2024-07-20T06_41_06.609Z.csv"
 
 NGINX_ACCESS_LOG_REGEX_PATTERN = r'\[(?P<date>\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} \+\d{4})\]\s+(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+-\s+"(?P<http_method>\w+)\s+(?P<http_host>\S+)\s+(?P<http_url>\S+)"\s+(?P<http_status_code>\d{3})\s+(?P<network_body_bytes_sent>\d+)\s+"(?P<http_referrer>\S+)"\s+"(?P<http_user_agent>.+)"'
 
@@ -31,9 +34,21 @@ def is_ddos_request(log_attributes: dict[str, Any]) -> bool:
     return True
 
 
+@dataclass
+class DDOSRequest:
+    ip: str
+    http_method: str
+    http_host: str
+    http_url: str
+    http_status_code: int
+    http_referrer: str
+    http_user_agent: str
+    timestamp: datetime
+
+
 def main() -> int:
     failed_to_parse = 0
-    deduplicated_ips: set[str] = set()
+    ddos_requests_by_ip: defaultdict[str, list[DDOSRequest]] = defaultdict(list)
     with open(CSV_FILEPATH) as f:
         csv_reader = csv.DictReader(f)
         for line in csv_reader:
@@ -44,26 +59,39 @@ def main() -> int:
                 continue
 
             if is_ddos_request(log_attributes):
-                deduplicated_ips.add(log_attributes["ip"])
+                ddos_request = DDOSRequest(
+                    ip=log_attributes["ip"],
+                    http_method=log_attributes["http_method"],
+                    http_host=log_attributes["http_host"],
+                    http_url=log_attributes["http_url"],
+                    http_status_code=int(log_attributes["http_status_code"]),
+                    http_referrer=log_attributes["http_referrer"],
+                    http_user_agent=log_attributes["http_user_agent"],
+                    timestamp=datetime.strptime(
+                        log_attributes["date"], "%d/%b/%Y:%H:%M:%S %z"
+                    ),
+                )
+                ddos_requests_by_ip[log_attributes["ip"]].append(ddos_request)
                 print(
                     "DDOS request detected",
-                    log_attributes["http_method"],
-                    log_attributes["http_url"],
+                    "{timestamp} {ip} {http_method} {http_host} {http_url}".format(
+                        **asdict(ddos_request)
+                    ),
                 )
-                # TODO: auto-report to abuseipdb
             else:
                 pass  # print("Normal request", log_attributes["http_url"])
 
     # Write to a file for use in cloudflare to block the ips
     # (For use here: https://i.cmyui.xyz/twZwfdhmIys.png)
     with open(".data/ddos_ips.txt", "w") as f:
-        for ip in deduplicated_ips:
+        for ip in ddos_requests_by_ip:
             f.write(f"{ip}\n")
 
-    print(f"Wrote {len(deduplicated_ips)} IPs to .data/ddos_ips.txt")
+    # TODO: auto-report to abuseipdb
+
+    print(f"Wrote {len(ddos_requests_by_ip)} IPs to .data/ddos_ips.txt")
     if failed_to_parse:
-        print(f"Failed to parse {failed_to_parse} lines")
-        return 1
+        print(f"Warning: Failed to parse {failed_to_parse} lines")
 
     return 0
 
