@@ -10,9 +10,6 @@ from adapters import datadog
 
 # TODO: potentially set this up as a nightly cron
 
-# Find urls starting their query string with & and not ?
-INVALID_QUERY_PARAM_URL_REGEX_PATTERN = r"^/[^?]*&.*$"
-
 
 @dataclass
 class NetworkRequest:
@@ -27,14 +24,11 @@ class NetworkRequest:
 
     def is_ddos_request(self) -> bool:
         # look for urls like /abc&def=1
-        url_match = re.match(
-            INVALID_QUERY_PARAM_URL_REGEX_PATTERN,
-            self.http_url,
-        )
-        if not url_match:
-            return False
+        url_match = re.match(r"^/[^?]*&.*$", self.http_url)
+        if url_match:
+            return True
 
-        return True
+        return False
 
 
 def main() -> int:
