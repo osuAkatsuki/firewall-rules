@@ -1,10 +1,11 @@
 import csv
+import re
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
 
-import re
+# TODO: potentially set this up as a nightly cron & fetch logs from datadog apis
 
 CSV_FILEPATH = ".data/extract-2024-07-20T06_41_06.609Z.csv"
 
