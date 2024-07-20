@@ -8,8 +8,6 @@ import settings
 from adapters import cloudflare
 from adapters import datadog
 
-# TODO: potentially set this up as a nightly cron
-
 
 @dataclass
 class NetworkRequest:
@@ -33,7 +31,7 @@ class NetworkRequest:
 
 def main() -> int:
     datadog_logs = datadog.get_datadog_logs(
-        events_from="now-1h",
+        events_from="now-2h",
         events_to="now",
         query="service:rev-proxy",
     )
@@ -62,6 +60,7 @@ def main() -> int:
             pass  # print("Normal request", log_attributes["http_url"])
     print(f"Parsed {len(datadog_logs)} requests from logs")
 
+    # TODO: de-duplicate against existing block list
     malicious_ipv4_addresses: list[str] = [
         ip
         for ip in malicious_requests_by_ip
