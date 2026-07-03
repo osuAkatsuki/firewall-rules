@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: ip-autoblock-job-production
-            image: osuakatsuki/firewall-rules:latest
+            image: ghcr.io/osuakatsuki/firewall-rules:latest
             imagePullPolicy: Always
             command:
               - /scripts/bootstrap.sh
